@@ -1,0 +1,97 @@
+1. MaxVolumeMapper.java
+
+import java.io.IOException;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+public class MaxVolumeMappper extends Mapper<LongWritable, Text, Text, FloatWritable> {
+
+	@Override
+	public void map(LongWritable key, Text value, Context context)
+			throws IOException, InterruptedException {
+
+		String line = value.toString();
+		String[] items = line.split(",");
+		
+		String stock = items[1];
+		Float Volume  =Float.parseFloat(items[7]);
+		
+		context.write(new Text(stock),new FloatWritable(Volume));
+	}
+}
+
+
+2. MaxVolumeReducer.java 
+
+
+import java.io.IOException;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+ public class MaxVolumeReducer
+ extends Reducer<Text, FloatWritable, Text, FloatWritable> {
+
+	 @Override
+	 public void reduce(Text key, Iterable<FloatWritable> values, Context context)
+			 throws IOException, InterruptedException {
+
+		 float maxVolume=Float.MIN_VALUE;
+		 
+		 //Iterate all  and calculate maximum
+		 for (FloatWritable value : values) {
+			 maxVolume = Math.max(maxVolume, value.get());
+		 }
+		 
+		 //Write output
+		 context.write(key, new FloatWritable(maxVolume));
+	 }
+ }
+
+
+3. Maxvolume.java 
+
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+
+public class MaxVolume {
+
+	public static void main(String[] args) throws Exception {
+		if (args.length != 2) {
+			System.err.println("Usage: MaxVolume <input path> <output path>");
+			System.exit(-1);
+		}
+
+		// Define MapReduce job
+		Job job = new Job();
+		job.setJarByClass(MaxVolume.class);
+		job.setJobName("MaxVolume");
+
+		// Set input and output locations
+		FileInputFormat.addInputPath(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+		// Set Input and Output formats
+		job.setInputFormatClass(TextInputFormat.class);
+		job.setOutputFormatClass(TextOutputFormat.class);
+
+		job.setMapperClass(MaxVolumeMappper.class);
+		job.setReducerClass(MaxVolumeReducer.class);
+
+		// Output types
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(FloatWritable.class);
+
+		// Submit job
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+}
