@@ -1,7 +1,7 @@
 # Big-Data-Analytics-
-MapReduce Programs 
+Hadoop - MapReduce Programs 
 
-This Contains MapReduce Programs -> Mapper, Reducer and The Main file in java format 
+Mapper, Reducer and The Main file in java format 
 Data Set -> Created by me and data obtained from Kaggle.com 
 
 Execution Environment -> Cloudera Hadoop 
